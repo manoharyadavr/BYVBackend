@@ -19,7 +19,9 @@ const SHEET_ID = process.env.GOOGLE_SHEET_ID;
 console.log("Loaded Google Sheet ID:", SHEET_ID);
 
 export const submitContactForm = async (req, res) => {
+    console.log("Request received at /api/contact", req.body); // ✅ Log input
   try {
+      
     const { name, email, contactNumber, message } = req.body;
 
     // Validate required fields
