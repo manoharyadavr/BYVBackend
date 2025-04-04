@@ -7,6 +7,7 @@ dotenv.config();
 
 // Load Google Service Account Key
 const KEYFILEPATH = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+console.log(KEYFILEPATH)
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 
 // Authenticate with Google Sheets using a service account
