@@ -1,36 +1,36 @@
-const express = require("express");
-const cors = require("cors");
-const dotenv = require("dotenv");
-const connectDB = require("./config/db");
-const appointmentRoutes = require("./routes/appointmentRoutes");
-const contactRoutes = require("./routes/contactRoutes")
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import mongoose from "mongoose";
+import contactRoutes from "./routes/contactRoutes.js";
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Connect to MongoDB
-connectDB();
-
-// ✅ Middleware
-app.use(express.json()); // Allows JSON request body
+// Middleware
+// app.use(cors());
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:3001"], // ✅ Allow frontend requests
-  methods: "GET,POST,PUT,DELETE",
-  allowedHeaders: ["Content-Type"],
+  origin: "http://localhost:3000", // or your React app URL
+  methods: ["GET", "POST"],
+  credentials: true
 }));
 
-// ✅ Test Route
+app.use(express.json());
+
+// Routes
+app.use("/api/contact", contactRoutes);
+
 app.get("/", (req, res) => {
-  res.send("API is running...");
+  res.send("BYV Backend is running...");
 });
 
-// ✅ Routes
-app.use("/api/appointments", appointmentRoutes); // ✅ Correct path
-app.use("/api/contact", contactRoutes)
-
-// ✅ Start Server
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log("MongoDB Connected");
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch((err) => console.log(err));

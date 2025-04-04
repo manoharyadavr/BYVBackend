@@ -4,17 +4,27 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "googleapis": "^144.0.0",
-    "mongoose": "^8.10.1"
-  }
+    "mongoose": "^8.13.2",
+    "nodemailer": "^6.10.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manoharyadavr/BYV.git"
+  },
+  "bugs": {
+    "url": "https://github.com/manoharyadavr/BYV.git/issues"
+  },
+  "homepage": "https://github.com/manoharyadavr/BYV.git#readme"
 }
