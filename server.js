@@ -12,7 +12,6 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors({
   origin: ["http://localhost:3000", "https://byv-nfqn.onrender.com"],
-  origin: ["http://localhost:3000", "https://byv-nfqn.onrender.com"],
   methods: ["GET", "POST"],
   credentials: true
 }));
@@ -39,9 +38,9 @@ mongoose
 
 // ✅ Serve React frontend
 const __dirname = path.resolve();
-app.use(express.static(path.join(__dirname, "/frontend/build")));
+app.use(express.static(path.join(__dirname, "/build")));
 
 // ✅ Handle any unknown routes by serving index.html
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "/frontend/build/index.html"));
+  res.sendFile(path.join(__dirname, "/build/index.html"));
 });
