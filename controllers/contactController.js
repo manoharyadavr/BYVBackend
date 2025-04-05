@@ -5,100 +5,100 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Load Google Service Account Key
-const KEYFILEPATH = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+// Constants from .env
+const SHEET_ID = process.env.GOOGLE_SHEET_ID;
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+const OWNER_EMAIL = process.env.OWNER_EMAIL;
+const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
+const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 
-// Authenticate with Google Sheets using a service account
-const auth = new google.auth.GoogleAuth({
-    keyFile: KEYFILEPATH,
-    scopes: SCOPES,
-});
+// Authenticate using raw credentials from env
+const auth = new google.auth.JWT(
+  GOOGLE_CLIENT_EMAIL,
+  null,
+  GOOGLE_PRIVATE_KEY,
+  SCOPES
+);
 
-const SHEET_ID = process.env.GOOGLE_SHEET_ID;
-console.log("Loaded Google Sheet ID:", SHEET_ID);
-
+// 🌐 Main Contact Form Handler
 export const submitContactForm = async (req, res) => {
   try {
     const { name, email, contactNumber, message } = req.body;
 
-    // Validate required fields
     if (!name || !email || !contactNumber || !message) {
       return res.status(400).json({ success: false, message: "All fields are required!" });
     }
 
-    // Save to MongoDB
     const newContact = new Contact({ name, email, contactNumber, message });
     await newContact.save();
 
-    // Send Emails
-    await sendEmails(name, email, contactNumber, message);
+    await sendEmails({ name, email, contactNumber, message });
+    await saveToGoogleSheets({ name, email, contactNumber, message });
 
-    // Store in Google Sheets
-    await saveToGoogleSheets(name, email, contactNumber, message);
-
-    res.status(201).json({ success: true, message: "Contact form submitted successfully!" });
+    return res.status(201).json({ success: true, message: "Contact form submitted successfully!" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Form Submission Error:", error);
+    return res.status(500).json({ success: false, message: "Something went wrong. Please try again later." });
   }
 };
 
-// Send emails to user and owner
-const sendEmails = async (name, email, contactNumber, message) => {
+// 📩 Email Notification Handler
+const sendEmails = async ({ name, email, contactNumber, message }) => {
   try {
     const transport = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, // Use App Passwords instead of actual password
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
       },
     });
 
-    // Email options for user confirmation
     const userMailOptions = {
-      from: `"BYV Team" <${process.env.EMAIL_USER}>`,
-      to: email, // Ensure this is correctly set
+      from: `"BYV Team" <${EMAIL_USER}>`,
+      to: email,
       subject: "Submission Successful - BYV",
       text: `Hi ${name},\n\nThank you for reaching out! We'll get back to you soon.\n\nBest Regards,\nBYV Team`,
-      replyTo: process.env.EMAIL_USER, // Helps prevent spam filters from blocking the email
+      replyTo: EMAIL_USER,
     };
 
-    // Email options for owner notification
     const ownerMailOptions = {
-      from: `"BYV Team" <${process.env.EMAIL_USER}>`,
-      to: process.env.OWNER_EMAIL,
+      from: `"BYV Team" <${EMAIL_USER}>`,
+      to: OWNER_EMAIL,
       subject: "New Lead - BYV",
       text: `New contact form submission:\n\nName: ${name}\nEmail: ${email}\nContact Number: ${contactNumber}\nMessage: ${message}`,
     };
 
-    // Send both emails
-    await transport.sendMail(userMailOptions);
-    await transport.sendMail(ownerMailOptions);
+    await Promise.all([
+      transport.sendMail(userMailOptions),
+      transport.sendMail(ownerMailOptions),
+    ]);
 
-    console.log("Emails sent successfully!");
-
+    console.log("✅ Emails sent successfully");
   } catch (error) {
-    console.error("Email Error:", error);
+    console.error("❌ Email Sending Error:", error);
   }
 };
 
-// Save to Google Sheets
-const saveToGoogleSheets = async (name, email, contactNumber, message) => {
+// 📊 Google Sheets Storage Handler
+const saveToGoogleSheets = async ({ name, email, contactNumber, message }) => {
   try {
     const sheets = google.sheets({ version: "v4", auth });
-    const data = [[name, email, contactNumber, message, new Date().toISOString()]]; // Added contactNumber
+    const timestamp = new Date().toISOString();
+    const rowData = [[name, email, contactNumber, message, timestamp]];
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
-      range: "Sheet1!A:E", // Updated to include column E
+      range: "Sheet1!A:E",
       valueInputOption: "RAW",
       insertDataOption: "INSERT_ROWS",
-      resource: { values: data },
+      resource: { values: rowData },
     });
 
-    console.log("Data saved to Google Sheets successfully!");
+    console.log("✅ Data saved to Google Sheets successfully");
   } catch (error) {
-    console.error("Google Sheets Error:", error);
+    console.error("❌ Google Sheets Error:", error);
   }
 };
