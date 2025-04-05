@@ -38,9 +38,11 @@ mongoose
 
 // ✅ Serve React frontend
 const __dirname = path.resolve();
-app.use(express.static(path.join(__dirname, "/build")));
 
-// ✅ Handle any unknown routes by serving index.html
+// Serve React frontend from build
+app.use(express.static(path.join(__dirname, "./build")));
+
+// Fallback for client-side routes
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "/build/index.html"));
+  res.sendFile(path.join(__dirname, "./build/index.html"));
 });
