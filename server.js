@@ -4,6 +4,11 @@ import cors from "cors";
 import mongoose from "mongoose";
 import contactRoutes from "./routes/contactRoutes.js";
 import path from "path";
+import { fileURLToPath } from "url";
+
+// Setup __dirname in ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 const app = express();
@@ -15,34 +20,27 @@ app.use(cors({
   methods: ["GET", "POST"],
   credentials: true
 }));
-
 app.use(express.json());
 
-// API Routes
 // API Routes
 app.use("/api/contact", contactRoutes);
 
 // MongoDB Connection
-// MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("MongoDB Connected");
+    console.log("✅ MongoDB Connected");
 
-    // 🔥 Only start server after MongoDB connection
-
-    // 🔥 Only start server after MongoDB connection
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    // Start server only after DB connection
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
-  .catch((err) => console.log(err));
+  .catch((err) => console.error("❌ MongoDB Error:", err));
 
-// ✅ Serve React frontend
-const __dirname = path.resolve();
+// ✅ Serve React Frontend
+const buildPath = path.join(__dirname, "./build");
+app.use(express.static(buildPath));
 
-// Serve React frontend from build
-app.use(express.static(path.join(__dirname, "./build")));
-
-// Fallback for client-side routes
+// ✅ Fallback to React for all other routes
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "./build/index.html"));
+  res.sendFile(path.join(buildPath, "index.html"));
 });
